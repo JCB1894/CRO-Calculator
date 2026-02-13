@@ -86,6 +86,15 @@ input, select {
   font-size: 1.1rem;
 }
 
+
+.metric-sub {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
 .chart-block {
   margin-top: 1rem;
   border: 1px solid var(--border);
@@ -114,7 +123,7 @@ input, select {
 .bar-track {
   background: #eef2ff;
   border-radius: 999px;
-  height: 14px;
+  height: 8px;
   overflow: hidden;
 }
 
@@ -136,8 +145,8 @@ input, select {
 .posterior-fill-b { fill: rgba(79, 70, 229, 0.26); }
 .posterior-line-a { stroke: var(--a); stroke-width: 1; fill: none; }
 .posterior-line-b { stroke: var(--b); stroke-width: 1; fill: none; }
-.mean-line-a { stroke: var(--a); stroke-width: 1.8; stroke-dasharray: 5 1; }
-.mean-line-b { stroke: var(--b); stroke-width: 1.8; stroke-dasharray: 5 1; }
+.mean-line-a { stroke: var(--a); stroke-width: 1; stroke-dasharray: 5 4; }
+.mean-line-b { stroke: var(--b); stroke-width: 1; stroke-dasharray: 5 4; }
 
 .legend-inline {
   display: flex;
@@ -155,6 +164,38 @@ input, select {
 
 .pill.a { background: rgba(6, 182, 212, 0.14); color: #0e7490; }
 .pill.b { background: rgba(79, 70, 229, 0.14); color: #3730a3; }
+
+
+.decision-box {
+  margin-top: 1rem;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+}
+
+.decision-box.success {
+  border-color: #86efac;
+  background: linear-gradient(140deg, #f0fdf4, #dcfce7);
+}
+
+.decision-box.neutral {
+  border-color: #c7d2fe;
+  background: linear-gradient(140deg, #eef2ff, #e0e7ff);
+}
+
+.decision-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #334155;
+  margin-bottom: 0.2rem;
+}
+
+.decision-box strong {
+  font-size: 1.02rem;
+}
 
 .note { color: var(--muted); margin-top: 0.9rem; }
 .error {

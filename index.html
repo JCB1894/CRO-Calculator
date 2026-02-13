@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora A/B: Frecuentista o Bayesiana</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Calculadora A/B</h1>
+    <p class="subtitle">Compara dos variantes y elige el enfoque estadístico: <strong>frecuentista</strong> o <strong>bayesiano</strong>.</p>
+
+    <section class="card">
+      <h2>Configuración</h2>
+      <div class="grid two-cols">
+        <label>
+          Método
+          <select id="method">
+            <option value="frequentist">Frecuentista (z-test de proporciones)</option>
+            <option value="bayesian">Bayesiano (Beta-Binomial)</option>
+          </select>
+        </label>
+        <label id="confidenceField">
+          Nivel objetivo (solo frecuentista)
+          <input id="confidenceTarget" type="number" min="50" max="99.99" step="0.01" value="95" />
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Datos de variante</h2>
+      <div class="grid two-cols">
+        <fieldset>
+          <legend>Variante A (control)</legend>
+          <label>Visitantes <input id="visitorsA" type="number" min="1" value="1000" /></label>
+          <label>Conversiones <input id="conversionsA" type="number" min="0" value="120" /></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Variante B (test)</legend>
+          <label>Visitantes <input id="visitorsB" type="number" min="1" value="1000" /></label>
+          <label>Conversiones <input id="conversionsB" type="number" min="0" value="145" /></label>
+        </fieldset>
+      </div>
+      <button id="calculateBtn">Calcular</button>
+    </section>
+
+    <section class="card" id="results" aria-live="polite">
+      <h2>Resultados</h2>
+      <div id="resultContent">Introduce los datos y pulsa <em>Calcular</em>.</div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

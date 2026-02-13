@@ -192,9 +192,9 @@ function renderFrequentistChart(z) {
           </linearGradient>
         </defs>
         <path d="M30,160 C90,160 130,22 250,22 C370,22 410,160 470,160 L470,160 L30,160 Z" fill="url(#freqFill)"/>
-        <path d="M30,160 C90,160 130,22 250,22 C370,22 410,160 470,160" fill="none" stroke="#4f46e5" stroke-width="4"/>
-        <line x1="30" y1="160" x2="470" y2="160" stroke="#9ca3af" stroke-width="2"/>
-        <line x1="${markerLeft}" y1="26" x2="${markerLeft}" y2="160" stroke="#ef4444" stroke-width="3"/>
+        <path d="M30,160 C90,160 130,22 250,22 C370,22 410,160 470,160" fill="none" stroke="#4f46e5" stroke-width="1"/>
+        <line x1="30" y1="160" x2="470" y2="160" stroke="#9ca3af" stroke-width="1"/>
+        <line x1="${markerLeft}" y1="26" x2="${markerLeft}" y2="160" stroke="#ef4444" stroke-width="1"/>
         <text x="${markerLeft + 6}" y="34" font-size="12" fill="#111827">z=${z.toFixed(2)}</text>
         <text x="32" y="178" font-size="12" fill="#6b7280">-4σ</text>
         <text x="245" y="178" font-size="12" fill="#6b7280">0</text>
@@ -222,7 +222,7 @@ function renderBayesianChart(posteriorA, posteriorB) {
     <div class="chart-block glassy">
       <h3>Bayesiano: campanas posteriores por variación</h3>
       <svg viewBox="0 0 500 190" class="dist-chart" role="img" aria-label="Campanas de Gauss para las distribuciones posteriores de A y B">
-        <line x1="30" y1="160" x2="470" y2="160" stroke="#9ca3af" stroke-width="2"/>
+        <line x1="30" y1="160" x2="470" y2="160" stroke="#9ca3af" stroke-width="1"/>
         <path d="${curveA.fill}" class="posterior-fill-a"/>
         <path d="${curveB.fill}" class="posterior-fill-b"/>
         <path d="${curveA.path}" class="posterior-line-a"/>

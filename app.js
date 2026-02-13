@@ -72,15 +72,18 @@ function frequentistResult(vA, cA, vB, cB, target) {
   const pValueTwoSided = 2 * (1 - normalCdf(Math.abs(z)));
   const confidence = (1 - pValueTwoSided) * 100;
   const uplift = pA === 0 ? NaN : ((pB - pA) / pA) * 100;
+  const upliftSd = pA === 0 ? NaN : (se / pA) * 100;
 
   return {
     methodName: 'Frecuentista',
     pA,
     pB,
     uplift,
+    upliftSd,
     z,
     pValueTwoSided,
     confidence,
+    se,
     isWinner: confidence >= target && pB > pA
   };
 }
@@ -94,13 +97,15 @@ function bayesianResult(vA, cA, vB, cB) {
   const draws = 10000;
   let bBetter = 0;
   let upliftSum = 0;
+  let upliftSqSum = 0;
 
   for (let i = 0; i < draws; i += 1) {
     const sampleA = betaSample(alphaA, betaA);
     const sampleB = betaSample(alphaB, betaB);
-    const uplift = (sampleB - sampleA) / sampleA;
+    const uplift = ((sampleB - sampleA) / sampleA) * 100;
     if (sampleB > sampleA) bBetter += 1;
     upliftSum += uplift;
+    upliftSqSum += uplift * uplift;
   }
 
   const pA = cA / vA;
@@ -112,13 +117,17 @@ function bayesianResult(vA, cA, vB, cB) {
   const varA = (alphaA * betaA) / (((alphaA + betaA) ** 2) * (alphaA + betaA + 1));
   const varB = (alphaB * betaB) / (((alphaB + betaB) ** 2) * (alphaB + betaB + 1));
 
+  const expectedUplift = upliftSum / draws;
+  const upliftPosteriorVariance = Math.max(0, upliftSqSum / draws - expectedUplift ** 2);
+
   return {
     methodName: 'Bayesiano',
     pA,
     pB,
     uplift: upliftObserved,
+    upliftSd: Math.sqrt(upliftPosteriorVariance),
     probBBetter: (bBetter / draws) * 100,
-    expectedUplift: (upliftSum / draws) * 100,
+    expectedUplift,
     posteriorA: { mean: meanA, sd: Math.sqrt(varA) },
     posteriorB: { mean: meanB, sd: Math.sqrt(varB) },
     isWinner: bBetter / draws >= 0.95
@@ -134,6 +143,10 @@ function validateInputs(vA, cA, vB, cB) {
   if (cA < 0 || cB < 0) return 'Las conversiones no pueden ser negativas.';
   if (cA > vA || cB > vB) return 'Las conversiones no pueden superar a los visitantes.';
   return null;
+}
+
+function metricValueWithSd(value, sd) {
+  return `${asPct(value)}<span class="metric-sub">σ: ${asPct(sd)}</span>`;
 }
 
 function renderRateBars(pA, pB) {
@@ -156,7 +169,7 @@ function gaussianPdf(x, mean, sd) {
   return Math.exp(-0.5 * z * z) / (sigma * Math.sqrt(2 * Math.PI));
 }
 
-function makeCurvePath(mean, sd, xMin, xMax, yMax, colorClass) {
+function makeCurvePath(mean, sd, xMin, xMax, yMax) {
   const points = [];
   const n = 90;
 
@@ -173,38 +186,60 @@ function makeCurvePath(mean, sd, xMin, xMax, yMax, colorClass) {
   }).join(' ');
 
   const fill = `${path} L470,160 L30,160 Z`;
-
-  return { path, fill, colorClass };
+  return { path, fill };
 }
 
-function renderFrequentistChart(z) {
-  const clippedZ = Math.max(-4, Math.min(4, z));
-  const markerLeft = ((clippedZ + 4) / 8) * 440 + 30;
+function frequentistBoxStats(p, n) {
+  const sd = Math.sqrt((p * (1 - p)) / n);
+  const zQ = 0.67448975;
+  return {
+    whiskerLow: Math.max(0, p - 1.96 * sd),
+    q1: Math.max(0, p - zQ * sd),
+    median: p,
+    q3: Math.min(1, p + zQ * sd),
+    whiskerHigh: Math.min(1, p + 1.96 * sd),
+    sd
+  };
+}
+
+function renderFrequentistChart(pA, pB, nA, nB, uplift) {
+  const boxA = frequentistBoxStats(pA, nA);
+  const boxB = frequentistBoxStats(pB, nB);
+  const xMin = Math.max(0, Math.min(boxA.whiskerLow, boxB.whiskerLow) - 0.01);
+  const xMax = Math.min(1, Math.max(boxA.whiskerHigh, boxB.whiskerHigh) + 0.01);
+  const xPos = (p) => 40 + ((p - xMin) / (xMax - xMin || 1)) * 420;
+
+  const drawBox = (box, y, color) => `
+    <line x1="${xPos(box.whiskerLow)}" y1="${y}" x2="${xPos(box.q1)}" y2="${y}" stroke="${color}" stroke-width="1"/>
+    <line x1="${xPos(box.q3)}" y1="${y}" x2="${xPos(box.whiskerHigh)}" y2="${y}" stroke="${color}" stroke-width="1"/>
+    <line x1="${xPos(box.whiskerLow)}" y1="${y - 8}" x2="${xPos(box.whiskerLow)}" y2="${y + 8}" stroke="${color}" stroke-width="1"/>
+    <line x1="${xPos(box.whiskerHigh)}" y1="${y - 8}" x2="${xPos(box.whiskerHigh)}" y2="${y + 8}" stroke="${color}" stroke-width="1"/>
+    <rect x="${xPos(box.q1)}" y="${y - 12}" width="${Math.max(2, xPos(box.q3) - xPos(box.q1))}" height="24" fill="${color}" opacity="0.25" stroke="${color}" stroke-width="1"/>
+    <line x1="${xPos(box.median)}" y1="${y - 12}" x2="${xPos(box.median)}" y2="${y + 12}" stroke="${color}" stroke-width="1"/>
+  `;
 
   return `
     <div class="chart-block glassy">
-      <h3>Frecuentista: distribución normal y z-score</h3>
-      <svg viewBox="0 0 500 190" class="dist-chart" role="img" aria-label="Curva normal estándar con marcador z-score">
-        <defs>
-          <linearGradient id="freqFill" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.45"/>
-            <stop offset="100%" stop-color="#6366f1" stop-opacity="0.06"/>
-          </linearGradient>
-        </defs>
-        <path d="M30,160 C90,160 130,22 250,22 C370,22 410,160 470,160 L470,160 L30,160 Z" fill="url(#freqFill)"/>
-        <path d="M30,160 C90,160 130,22 250,22 C370,22 410,160 470,160" fill="none" stroke="#4f46e5" stroke-width="1"/>
-        <line x1="30" y1="160" x2="470" y2="160" stroke="#9ca3af" stroke-width="1"/>
-        <line x1="${markerLeft}" y1="26" x2="${markerLeft}" y2="160" stroke="#ef4444" stroke-width="1"/>
-        <text x="${markerLeft + 6}" y="34" font-size="12" fill="#111827">z=${z.toFixed(2)}</text>
-        <text x="32" y="178" font-size="12" fill="#6b7280">-4σ</text>
-        <text x="245" y="178" font-size="12" fill="#6b7280">0</text>
-        <text x="446" y="178" font-size="12" fill="#6b7280">+4σ</text>
+      <h3>Frecuentista: box-plot de tasas (aprox.)</h3>
+      <svg viewBox="0 0 500 190" class="dist-chart" role="img" aria-label="Box-plot aproximado de tasas de conversión para A y B">
+        <line x1="40" y1="150" x2="460" y2="150" stroke="#9ca3af" stroke-width="1"/>
+        ${drawBox(boxA, 75, '#06b6d4')}
+        ${drawBox(boxB, 115, '#4f46e5')}
+        <text x="12" y="79" font-size="12" fill="#0e7490">A</text>
+        <text x="12" y="119" font-size="12" fill="#3730a3">B</text>
+        <text x="40" y="172" font-size="12" fill="#6b7280">${(xMin * 100).toFixed(2)}%</text>
+        <text x="420" y="172" font-size="12" fill="#6b7280">${(xMax * 100).toFixed(2)}%</text>
       </svg>
+      <div class="legend-inline">
+        <span class="pill a">A: Q1 ${asPct(boxA.q1 * 100)} · <strong>Med ${asPct(boxA.median * 100)}</strong> · Q3 ${asPct(boxA.q3 * 100)}</span>
+        <span class="pill b">B: Q1 ${asPct(boxB.q1 * 100)} · <strong>Med ${asPct(boxB.median * 100)}</strong> · Q3 ${asPct(boxB.q3 * 100)}</span>
+        <span class="pill b"><strong>Uplift: ${asPct(uplift)}</strong></span>
+      </div>
     </div>
   `;
 }
 
-function renderBayesianChart(posteriorA, posteriorB) {
+function renderBayesianChart(posteriorA, posteriorB, uplift) {
   const combinedSd = Math.max(posteriorA.sd, posteriorB.sd, 0.003);
   const xMin = Math.max(0, Math.min(posteriorA.mean, posteriorB.mean) - 4 * combinedSd);
   const xMax = Math.min(1, Math.max(posteriorA.mean, posteriorB.mean) + 4 * combinedSd);
@@ -213,16 +248,24 @@ function renderBayesianChart(posteriorA, posteriorB) {
     gaussianPdf(posteriorB.mean, posteriorB.mean, posteriorB.sd)
   );
 
-  const curveA = makeCurvePath(posteriorA.mean, posteriorA.sd, xMin, xMax, yMax, 'a');
-  const curveB = makeCurvePath(posteriorB.mean, posteriorB.sd, xMin, xMax, yMax, 'b');
-
-  const meanX = (mean) => 30 + ((mean - xMin) / (xMax - xMin)) * 440;
+  const curveA = makeCurvePath(posteriorA.mean, posteriorA.sd, xMin, xMax, yMax);
+  const curveB = makeCurvePath(posteriorB.mean, posteriorB.sd, xMin, xMax, yMax);
+  const meanX = (mean) => 30 + ((mean - xMin) / (xMax - xMin || 1)) * 440;
+  const sigmaBand = (post) => {
+    const low = Math.max(xMin, post.mean - post.sd);
+    const high = Math.min(xMax, post.mean + post.sd);
+    return { low: meanX(low), high: meanX(high) };
+  };
+  const bandA = sigmaBand(posteriorA);
+  const bandB = sigmaBand(posteriorB);
 
   return `
     <div class="chart-block glassy">
-      <h3>Bayesiano: campanas posteriores por variación</h3>
-      <svg viewBox="0 0 500 190" class="dist-chart" role="img" aria-label="Campanas de Gauss para las distribuciones posteriores de A y B">
+      <h3>Bayesiano: campanas posteriores y desviación típica</h3>
+      <svg viewBox="0 0 500 190" class="dist-chart" role="img" aria-label="Campanas de Gauss para las distribuciones posteriores de A y B con bandas de desviación típica">
         <line x1="30" y1="160" x2="470" y2="160" stroke="#9ca3af" stroke-width="1"/>
+        <rect x="${bandA.low}" y="30" width="${Math.max(1, bandA.high - bandA.low)}" height="130" fill="rgba(6, 182, 212, 0.08)"/>
+        <rect x="${bandB.low}" y="30" width="${Math.max(1, bandB.high - bandB.low)}" height="130" fill="rgba(79, 70, 229, 0.08)"/>
         <path d="${curveA.fill}" class="posterior-fill-a"/>
         <path d="${curveB.fill}" class="posterior-fill-b"/>
         <path d="${curveA.path}" class="posterior-line-a"/>
@@ -233,14 +276,15 @@ function renderBayesianChart(posteriorA, posteriorB) {
         <text x="425" y="178" font-size="12" fill="#6b7280">${(xMax * 100).toFixed(2)}%</text>
       </svg>
       <div class="legend-inline">
-        <span class="pill a">A media: ${asPct(posteriorA.mean * 100, 3)}</span>
-        <span class="pill b">B media: ${asPct(posteriorB.mean * 100, 3)}</span>
+        <span class="pill a">A media: ${asPct(posteriorA.mean * 100, 3)} · σ: ${asPct(posteriorA.sd * 100, 3)}</span>
+        <span class="pill b">B media: ${asPct(posteriorB.mean * 100, 3)} · σ: ${asPct(posteriorB.sd * 100, 3)}</span>
+        <span class="pill b"><strong>Uplift posterior esperado: ${asPct(uplift)}</strong></span>
       </div>
     </div>
   `;
 }
 
-function renderResult(result, target) {
+function renderResult(result, target, vA, vB) {
   if (result.error) {
     el.resultContent.innerHTML = `<p class="error">${result.error}</p>`;
     return;
@@ -253,14 +297,14 @@ function renderResult(result, target) {
       <div class="result-grid">
         <div class="metric">Tasa A<strong>${asPct(result.pA * 100)}</strong></div>
         <div class="metric">Tasa B<strong>${asPct(result.pB * 100)}</strong></div>
-        <div class="metric">Uplift observado<strong>${asPct(result.uplift)}</strong></div>
+        <div class="metric">Uplift observado<strong>${metricValueWithSd(result.uplift, result.upliftSd)}</strong></div>
         <div class="metric">z-score<strong>${result.z.toFixed(3)}</strong></div>
         <div class="metric">p-value (2 colas)<strong>${result.pValueTwoSided.toFixed(5)}</strong></div>
         <div class="metric">Confianza estadística<strong>${asPct(result.confidence)}</strong></div>
       </div>
       ${rateBars}
-      ${renderFrequentistChart(result.z)}
-      <p class="note">Decisión: ${result.isWinner ? '✅ B gana con el umbral seleccionado.' : `ℹ️ No alcanza el umbral del ${target.toFixed(2)}%.`}</p>
+      ${renderFrequentistChart(result.pA, result.pB, vA, vB, result.uplift)}
+      <div class="decision-box ${result.isWinner ? 'success' : 'neutral'}"><span class="decision-label">Decisión</span><strong>${result.isWinner ? '✅ B gana con el umbral seleccionado' : `ℹ️ No alcanza el umbral del ${target.toFixed(2)}%`}</strong></div>
     `;
     return;
   }
@@ -269,13 +313,13 @@ function renderResult(result, target) {
     <div class="result-grid">
       <div class="metric">Tasa A<strong>${asPct(result.pA * 100)}</strong></div>
       <div class="metric">Tasa B<strong>${asPct(result.pB * 100)}</strong></div>
-      <div class="metric">Uplift observado<strong>${asPct(result.uplift)}</strong></div>
+      <div class="metric">Uplift observado<strong>${metricValueWithSd(result.uplift, result.upliftSd)}</strong></div>
       <div class="metric">P(B > A)<strong>${asPct(result.probBBetter)}</strong></div>
       <div class="metric">Uplift esperado (posterior)<strong>${asPct(result.expectedUplift)}</strong></div>
     </div>
     ${rateBars}
-    ${renderBayesianChart(result.posteriorA, result.posteriorB)}
-    <p class="note">Decisión: ${result.isWinner ? '✅ B tiene al menos 95% de probabilidad de ser mejor.' : 'ℹ️ B aún no alcanza 95% de probabilidad de mejora.'}</p>
+    ${renderBayesianChart(result.posteriorA, result.posteriorB, result.expectedUplift)}
+    <div class="decision-box ${result.isWinner ? 'success' : 'neutral'}"><span class="decision-label">Decisión</span><strong>${result.isWinner ? '✅ B tiene al menos 95% de probabilidad de ser mejor' : 'ℹ️ B aún no alcanza 95% de probabilidad de mejora'}</strong></div>
   `;
 }
 
@@ -306,7 +350,7 @@ function calculate() {
     ? frequentistResult(vA, cA, vB, cB, target)
     : bayesianResult(vA, cA, vB, cB);
 
-  renderResult(result, target);
+  renderResult(result, target, vA, vB);
 }
 
 el.method.addEventListener('change', () => {

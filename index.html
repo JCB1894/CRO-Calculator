@@ -49,6 +49,79 @@
       <h2>Resultados</h2>
       <div id="resultContent">Modifica cualquier valor para recalcular automáticamente.</div>
     </section>
+    <section> 
+      <h2>¿Es mejor frecuentista o bayesiano?</h2>
+      <p>Para CRO, ninguno es “mejor” en términos absolutos. Son marcos estadísticos distintos, y la elección depende del tipo de decisiones que quieres tomar y cómo trabajas.</p>
+
+      <h3>Diferencia conceptual clave</h3>
+        <ul>
+          <li><strong>Frecuentista:</strong> mide si hay evidencia suficiente para rechazar la hipótesis nula (p-value, significancia, intervalos de confianza).</li>
+          <li><strong>Bayesiano:</strong> estima la probabilidad de que una variante sea mejor que otra y cuánto mejor es, incorporando incertidumbre.</li>
+        </ul>
+
+      <h3>En CRO práctico</h3>
+      
+      <h4>Enfoque bayesiano</h4>
+      
+      <h5>Ventajas</h5>
+      <ul>
+        <li>Métricas más intuitivas: “Variante B tiene un 87% de probabilidad de ser mejor”.</li>
+        <li>Permite tomar decisiones antes, sin reglas estrictas de tamaño muestral.</li>
+        <li>No penaliza tanto mirar los resultados continuamente.</li>
+        <li>Más alineado con decisiones de negocio bajo incertidumbre.</li>
+      </ul>
+      
+      <h5>Desventajas</h5>
+      <ul>
+        <li>Puede depender de los “priors” si se usan.</li>
+        <li>Menos estándar en entornos académicos o corporativos tradicionales.</li>
+      </ul>
+      
+      <h5>Cuándo encaja mejor</h5>
+      <ul>
+        <li>Equipos de CRO ágiles.</li>
+        <li>Testing continuo sin fechas fijas de finalización.</li>
+        <li>Decisiones basadas en probabilidad y riesgo.</li>
+      </ul>
+      
+      <h4>Enfoque frecuentista</h4>
+      
+      <h5>Ventajas</h5>
+      <ul>
+        <li>Estándar histórico en estadística y entornos corporativos.</li>
+        <li>Metodología clara: tamaño de muestra, duración, p-value &lt; 0.05, etc.</li>
+        <li>Fácil de justificar ante stakeholders tradicionales.</li>
+      </ul>
+      
+      <h5>Desventajas</h5>
+      <ul>
+        <li>Menos intuitivo para negocio.</li>
+        <li>No permite “mirar” resultados sin ajustar el análisis.</li>
+        <li>Decisiones más rígidas.</li>
+      </ul>
+      
+      <h5>Cuándo encaja mejor</h5>
+      <ul>
+        <li>Empresas con procesos estadísticos formales.</li>
+        <li>Entornos regulados o muy conservadores.</li>
+        <li>Tests con duración y muestra predefinidas.</li>
+      </ul>
+      
+      <h3>Conclusión práctica</h3>
+      <p>En CRO moderno:</p>
+      <ul>
+        <li><strong>Bayesiano</strong> suele ser más útil para decisiones de producto y marketing.</li>
+        <li><strong>Frecuentista</strong> es más aceptado en entornos corporativos tradicionales.</li>
+      </ul>
+      
+      <p>Por eso:</p>
+      <ul>
+        <li>Equipos de experimentación de producto suelen preferir bayesiano.</li>
+        <li>Departamentos de analítica corporativa o data science clásico usan más frecuentista.</li>
+      </ul>
+      
+    </section>
+    
   </main>
 
   <script src="app.js"></script>

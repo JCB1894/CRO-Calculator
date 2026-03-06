@@ -6,7 +6,18 @@ const el = {
   conversionsA: document.getElementById('conversionsA'),
   visitorsB: document.getElementById('visitorsB'),
   conversionsB: document.getElementById('conversionsB'),
-  resultContent: document.getElementById('resultContent')
+  resultContent: document.getElementById('resultContent'),
+  tabButtons: document.querySelectorAll('.tab-button'),
+  tabPanels: document.querySelectorAll('.tab-panel'),
+  moneyVisitors: document.getElementById('moneyVisitors'),
+  moneyCrControl: document.getElementById('moneyCrControl'),
+  moneyCrVariant: document.getElementById('moneyCrVariant'),
+  moneyAov: document.getElementById('moneyAov'),
+  moneyMonthlyTraffic: document.getElementById('moneyMonthlyTraffic'),
+  moneyCalculate: document.getElementById('moneyCalculate'),
+  moneyResults: document.getElementById('moneyResults'),
+  moneyError: document.getElementById('moneyError'),
+  moneyFormulas: document.getElementById('moneyFormulas')
 };
 
 function clampConversions(visitors, conversions) {
@@ -353,6 +364,114 @@ function calculate() {
   renderResult(result, target, vA, vB);
 }
 
+
+
+function activateTab(tabId) {
+  el.tabPanels.forEach((panel) => panel.classList.toggle('active', panel.id === tabId));
+  el.tabButtons.forEach((button) => {
+    const isActive = button.dataset.tab === tabId;
+    button.classList.toggle('active', isActive);
+    button.setAttribute('aria-selected', String(isActive));
+  });
+}
+
+function normalizeCr(rawValue) {
+  const value = Number(rawValue);
+  if (!Number.isFinite(value)) return NaN;
+  return value > 1 ? value / 100 : value;
+}
+
+function asCurrency(value) {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+function validateMonetaryInputs(values) {
+  const entries = Object.entries(values);
+  for (const [key, value] of entries) {
+    if (value === '' || value === null || value === undefined) return `El campo ${key} es obligatorio.`;
+    const n = Number(value);
+    if (!Number.isFinite(n)) return `El campo ${key} debe ser numérico.`;
+    if (n < 0) return `El campo ${key} no puede ser negativo.`;
+  }
+  return null;
+}
+
+function clearMonetaryOutput(errorMessage = '') {
+  if (errorMessage) {
+    el.moneyError.textContent = errorMessage;
+    el.moneyError.classList.remove('hidden');
+  } else {
+    el.moneyError.textContent = '';
+    el.moneyError.classList.add('hidden');
+  }
+  el.moneyResults.innerHTML = '';
+  el.moneyFormulas.innerHTML = '';
+  el.moneyFormulas.classList.add('hidden');
+}
+
+function calculateMonetaryImpact() {
+  const rawInputs = {
+    'Visitantes en el test': el.moneyVisitors.value,
+    'CR control': el.moneyCrControl.value,
+    'CR variante': el.moneyCrVariant.value,
+    AOV: el.moneyAov.value,
+    'Tráfico mensual': el.moneyMonthlyTraffic.value
+  };
+
+  const validationError = validateMonetaryInputs(rawInputs);
+  if (validationError) {
+    clearMonetaryOutput(validationError);
+    return;
+  }
+
+  const visitors = Number(el.moneyVisitors.value);
+  const crControl = normalizeCr(el.moneyCrControl.value);
+  const crVariant = normalizeCr(el.moneyCrVariant.value);
+  const aov = Number(el.moneyAov.value);
+  const monthlyTraffic = Number(el.moneyMonthlyTraffic.value);
+
+  if (!Number.isFinite(crControl) || !Number.isFinite(crVariant)) {
+    clearMonetaryOutput('Los valores de CR deben ser numéricos.');
+    return;
+  }
+
+  if (crControl <= 0 || crVariant < 0) {
+    clearMonetaryOutput('CR control debe ser mayor que 0 y CR variante no puede ser negativo.');
+    return;
+  }
+
+  if (crControl > 1 || crVariant > 1) {
+    clearMonetaryOutput('Los CR deben representar un valor entre 0 y 100% (o entre 0 y 1 en decimal).');
+    return;
+  }
+
+  const uplift = (crVariant - crControl) / crControl;
+  const incrementalRevenue = (crVariant - crControl) * visitors * aov;
+  const annualValue = (crVariant - crControl) * monthlyTraffic * 12 * aov;
+
+  el.moneyError.classList.add('hidden');
+  el.moneyError.textContent = '';
+
+  el.moneyResults.innerHTML = `
+    <div class="metric">Uplift de conversión<strong>${asPct(uplift * 100)}</strong></div>
+    <div class="metric">Ingresos incrementales en el test<strong>${asCurrency(incrementalRevenue)}</strong></div>
+    <div class="metric">Impacto anual proyectado<strong>${asCurrency(annualValue)}</strong></div>
+  `;
+
+  el.moneyFormulas.innerHTML = `
+    <h3>Fórmulas utilizadas</h3>
+    <p><strong>uplift</strong> = (CR_variant - CR_control) / CR_control</p>
+    <p><strong>incremental_revenue</strong> = (CR_variant - CR_control) × visitors × AOV</p>
+    <p><strong>annual_value</strong> = (CR_variant - CR_control) × monthly_traffic × 12 × AOV</p>
+  `;
+  el.moneyFormulas.classList.remove('hidden');
+}
+
+
 el.method.addEventListener('change', () => {
   syncMethodUi();
   calculate();
@@ -363,5 +482,18 @@ el.method.addEventListener('change', () => {
   input.addEventListener('change', calculate);
 });
 
+el.tabButtons.forEach((button) => {
+  button.addEventListener('click', () => activateTab(button.dataset.tab));
+});
+
+el.moneyCalculate.addEventListener('click', calculateMonetaryImpact);
+
+[el.moneyVisitors, el.moneyCrControl, el.moneyCrVariant, el.moneyAov, el.moneyMonthlyTraffic].forEach((input) => {
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') calculateMonetaryImpact();
+  });
+});
+
 syncMethodUi();
+activateTab('analysisTab');
 calculate();

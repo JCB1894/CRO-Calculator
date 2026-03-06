@@ -3,125 +3,165 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculadora A/B: Frecuentista o Bayesiana</title>
+  <title>Calculadora A/B: Frecuentista, Bayesiana y Monetaria</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="container">
     <h1>Calculadora A/B</h1>
-    <p class="subtitle">Compara dos variantes y elige el enfoque estadístico: <strong>frecuentista</strong> o <strong>bayesiano</strong>.</p>
+    <p class="subtitle">Analiza un test A/B con enfoque <strong>frecuentista</strong>, <strong>bayesiano</strong> y su <strong>impacto monetario</strong>.</p>
 
-    <section class="card">
-      <h2>Configuración</h2>
-      <div class="grid two-cols">
-        <label>
-          Método
-          <select id="method">
-            <option value="frequentist">Frecuentista (z-test de proporciones)</option>
-            <option value="bayesian">Bayesiano (Beta-Binomial)</option>
-          </select>
-        </label>
-        <label id="confidenceField">
-          Nivel objetivo (solo frecuentista)
-          <input id="confidenceTarget" type="number" min="50" max="99.99" step="0.01" value="95" />
-        </label>
-      </div>
+    <nav class="tab-nav" aria-label="Secciones de la calculadora" role="tablist">
+      <button class="tab-button active" data-tab="analysisTab" id="analysisTabButton" role="tab" aria-selected="true" aria-controls="analysisTab" type="button">Análisis estadístico</button>
+      <button class="tab-button" data-tab="guideTab" id="guideTabButton" role="tab" aria-selected="false" aria-controls="guideTab" type="button">Guía metodológica</button>
+      <button class="tab-button" data-tab="monetaryTab" id="monetaryTabButton" role="tab" aria-selected="false" aria-controls="monetaryTab" type="button">Impacto monetario</button>
+    </nav>
+
+    <section id="analysisTab" class="tab-panel active" role="tabpanel" aria-labelledby="analysisTabButton" aria-live="polite">
+      <section class="card">
+        <h2>Configuración</h2>
+        <div class="grid two-cols">
+          <label>
+            Método
+            <select id="method">
+              <option value="frequentist">Frecuentista (z-test de proporciones)</option>
+              <option value="bayesian">Bayesiano (Beta-Binomial)</option>
+            </select>
+          </label>
+          <label id="confidenceField">
+            Nivel objetivo (solo frecuentista)
+            <input id="confidenceTarget" type="number" min="50" max="99.99" step="0.01" value="95" />
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Datos de variante</h2>
+        <div class="grid two-cols">
+          <fieldset>
+            <legend>Variante A (control)</legend>
+            <label>Visitantes <input id="visitorsA" type="number" min="1" value="1000" /></label>
+            <label>Conversiones <input id="conversionsA" type="number" min="0" value="120" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Variante B (test)</legend>
+            <label>Visitantes <input id="visitorsB" type="number" min="1" value="1000" /></label>
+            <label>Conversiones <input id="conversionsB" type="number" min="0" value="145" /></label>
+          </fieldset>
+        </div>
+      </section>
+
+      <section class="card" id="results" aria-live="polite">
+        <h2>Resultados</h2>
+        <div id="resultContent">Modifica cualquier valor para recalcular automáticamente.</div>
+      </section>
     </section>
 
-    <section class="card">
-      <h2>Datos de variante</h2>
-      <div class="grid two-cols">
-        <fieldset>
-          <legend>Variante A (control)</legend>
-          <label>Visitantes <input id="visitorsA" type="number" min="1" value="1000" /></label>
-          <label>Conversiones <input id="conversionsA" type="number" min="0" value="120" /></label>
-        </fieldset>
+    <section id="guideTab" class="tab-panel" role="tabpanel" aria-labelledby="guideTabButton">
+      <section class="card">
+        <h2>¿Es mejor frecuentista o bayesiano?</h2>
+        <p>Para CRO, ninguno es “mejor” en términos absolutos. Son marcos estadísticos distintos, y la elección depende del tipo de decisiones que quieres tomar y cómo trabajas.</p>
 
-        <fieldset>
-          <legend>Variante B (test)</legend>
-          <label>Visitantes <input id="visitorsB" type="number" min="1" value="1000" /></label>
-          <label>Conversiones <input id="conversionsB" type="number" min="0" value="145" /></label>
-        </fieldset>
-      </div>
-    </section>
-
-    <section class="card" id="results" aria-live="polite">
-      <h2>Resultados</h2>
-      <div id="resultContent">Modifica cualquier valor para recalcular automáticamente.</div>
-    </section>
-    <section> 
-      <h2>¿Es mejor frecuentista o bayesiano?</h2>
-      <p>Para CRO, ninguno es “mejor” en términos absolutos. Son marcos estadísticos distintos, y la elección depende del tipo de decisiones que quieres tomar y cómo trabajas.</p>
-
-      <h3>Diferencia conceptual clave</h3>
+        <h3>Diferencia conceptual clave</h3>
         <ul>
           <li><strong>Frecuentista:</strong> mide si hay evidencia suficiente para rechazar la hipótesis nula (p-value, significancia, intervalos de confianza).</li>
           <li><strong>Bayesiano:</strong> estima la probabilidad de que una variante sea mejor que otra y cuánto mejor es, incorporando incertidumbre.</li>
         </ul>
 
-      <h3>En CRO práctico</h3>
-      
-      <h4>Enfoque bayesiano</h4>
-      
-      <h5>Ventajas</h5>
-      <ul>
-        <li>Métricas más intuitivas: “Variante B tiene un 87% de probabilidad de ser mejor”.</li>
-        <li>Permite tomar decisiones antes, sin reglas estrictas de tamaño muestral.</li>
-        <li>No penaliza tanto mirar los resultados continuamente.</li>
-        <li>Más alineado con decisiones de negocio bajo incertidumbre.</li>
-      </ul>
-      
-      <h5>Desventajas</h5>
-      <ul>
-        <li>Puede depender de los “priors” si se usan.</li>
-        <li>Menos estándar en entornos académicos o corporativos tradicionales.</li>
-      </ul>
-      
-      <h5>Cuándo encaja mejor</h5>
-      <ul>
-        <li>Equipos de CRO ágiles.</li>
-        <li>Testing continuo sin fechas fijas de finalización.</li>
-        <li>Decisiones basadas en probabilidad y riesgo.</li>
-      </ul>
-      
-      <h4>Enfoque frecuentista</h4>
-      
-      <h5>Ventajas</h5>
-      <ul>
-        <li>Estándar histórico en estadística y entornos corporativos.</li>
-        <li>Metodología clara: tamaño de muestra, duración, p-value &lt; 0.05, etc.</li>
-        <li>Fácil de justificar ante stakeholders tradicionales.</li>
-      </ul>
-      
-      <h5>Desventajas</h5>
-      <ul>
-        <li>Menos intuitivo para negocio.</li>
-        <li>No permite “mirar” resultados sin ajustar el análisis.</li>
-        <li>Decisiones más rígidas.</li>
-      </ul>
-      
-      <h5>Cuándo encaja mejor</h5>
-      <ul>
-        <li>Empresas con procesos estadísticos formales.</li>
-        <li>Entornos regulados o muy conservadores.</li>
-        <li>Tests con duración y muestra predefinidas.</li>
-      </ul>
-      
-      <h3>Conclusión práctica</h3>
-      <p>En CRO moderno:</p>
-      <ul>
-        <li><strong>Bayesiano</strong> suele ser más útil para decisiones de producto y marketing.</li>
-        <li><strong>Frecuentista</strong> es más aceptado en entornos corporativos tradicionales.</li>
-      </ul>
-      
-      <p>Por eso:</p>
-      <ul>
-        <li>Equipos de experimentación de producto suelen preferir bayesiano.</li>
-        <li>Departamentos de analítica corporativa o data science clásico usan más frecuentista.</li>
-      </ul>
-      
+        <h3>En CRO práctico</h3>
+
+        <h4>Enfoque bayesiano</h4>
+
+        <h5>Ventajas</h5>
+        <ul>
+          <li>Métricas más intuitivas: “Variante B tiene un 87% de probabilidad de ser mejor”.</li>
+          <li>Permite tomar decisiones antes, sin reglas estrictas de tamaño muestral.</li>
+          <li>No penaliza tanto mirar los resultados continuamente.</li>
+          <li>Más alineado con decisiones de negocio bajo incertidumbre.</li>
+        </ul>
+
+        <h5>Desventajas</h5>
+        <ul>
+          <li>Puede depender de los “priors” si se usan.</li>
+          <li>Menos estándar en entornos académicos o corporativos tradicionales.</li>
+        </ul>
+
+        <h5>Cuándo encaja mejor</h5>
+        <ul>
+          <li>Equipos de CRO ágiles.</li>
+          <li>Testing continuo sin fechas fijas de finalización.</li>
+          <li>Decisiones basadas en probabilidad y riesgo.</li>
+        </ul>
+
+        <h4>Enfoque frecuentista</h4>
+
+        <h5>Ventajas</h5>
+        <ul>
+          <li>Estándar histórico en estadística y entornos corporativos.</li>
+          <li>Metodología clara: tamaño de muestra, duración, p-value &lt; 0.05, etc.</li>
+          <li>Fácil de justificar ante stakeholders tradicionales.</li>
+        </ul>
+
+        <h5>Desventajas</h5>
+        <ul>
+          <li>Menos intuitivo para negocio.</li>
+          <li>No permite “mirar” resultados sin ajustar el análisis.</li>
+          <li>Decisiones más rígidas.</li>
+        </ul>
+
+        <h5>Cuándo encaja mejor</h5>
+        <ul>
+          <li>Empresas con procesos estadísticos formales.</li>
+          <li>Entornos regulados o muy conservadores.</li>
+          <li>Tests con duración y muestra predefinidas.</li>
+        </ul>
+
+        <h3>Conclusión práctica</h3>
+        <p>En CRO moderno:</p>
+        <ul>
+          <li><strong>Bayesiano</strong> suele ser más útil para decisiones de producto y marketing.</li>
+          <li><strong>Frecuentista</strong> es más aceptado en entornos corporativos tradicionales.</li>
+        </ul>
+
+        <p>Por eso:</p>
+        <ul>
+          <li>Equipos de experimentación de producto suelen preferir bayesiano.</li>
+          <li>Departamentos de analítica corporativa o data science clásico usan más frecuentista.</li>
+        </ul>
+      </section>
     </section>
-    
+
+    <section id="monetaryTab" class="tab-panel" role="tabpanel" aria-labelledby="monetaryTabButton">
+      <section class="card">
+        <h2>Calculadora de impacto monetario</h2>
+        <div class="grid two-cols">
+          <label>Visitantes en el test
+            <input id="moneyVisitors" type="number" min="0" step="1" placeholder="Ej. 50000" />
+          </label>
+          <label>CR control
+            <input id="moneyCrControl" type="number" min="0" step="any" placeholder="Ej. 10 o 0.10" />
+          </label>
+          <label>CR variante
+            <input id="moneyCrVariant" type="number" min="0" step="any" placeholder="Ej. 12 o 0.12" />
+          </label>
+          <label>Average Order Value (AOV)
+            <input id="moneyAov" type="number" min="0" step="any" placeholder="Ej. 75" />
+          </label>
+          <label>Tráfico mensual (proyección)
+            <input id="moneyMonthlyTraffic" type="number" min="0" step="1" placeholder="Ej. 200000" />
+          </label>
+        </div>
+        <button id="moneyCalculate" class="primary-btn" type="button">Calcular</button>
+        <p id="moneyError" class="error hidden"></p>
+      </section>
+
+      <section class="card" aria-live="polite">
+        <h2>Resultados monetarios</h2>
+        <div id="moneyResults" class="result-grid"></div>
+        <div id="moneyFormulas" class="formula-box hidden"></div>
+      </section>
+    </section>
   </main>
 
   <script src="app.js"></script>
